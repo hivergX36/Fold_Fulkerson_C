@@ -12,12 +12,14 @@ struct FoldFulkerson
     int Nbsommet;
     float **matrix;
     bool *Marque;
+    float max_flow; 
 
     FoldFulkerson()
     {
         Nbsommet = 0;
         matrix = nullptr;
         Marque = nullptr;
+        max_flow = 0.0;
     }
 
     void parse_file(std::string filename)
@@ -68,77 +70,68 @@ struct FoldFulkerson
     }
 
 
-    void Dfs(bool &visited, int &parent, int node, int sink){
-        visited[node] = True
-        if node == sink:
-            return True
-        for v in range(self.NbVertices):
-            w = self.adjacency_Matrix[node][v]
-            if visited[v] == False and w > 0:
-                parent[v] = s
-                if self.Dfs(visited, parent, v, sink):
-                    return True
-        return False
+    bool Dfs(bool *visited, int *parent, int node, int sink){
+        visited[node] = true;
+        if (node == sink)
+            return true;
+        for (int v = 0; v < Nbsommet; v++){
+            float w = matrix[node][v];
+            if (!visited[v] && w > 0){
+                parent[v] = node;
+                if (Dfs(visited, parent, v, sink)){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
 
     void Fold_Fulkerson()
     {
-        int pred[Nbsommet];
+        int parent[Nbsommet];
         bool visited[Nbsommet];
-        int succ;
-        int pds_succ;
-        int dist = 0;
-        int Nodes[Nbsommet];
-        int chemin[Nbsommet];
-        int distance[Nbsommet];
-        int lenght;
+        max_flow = 0.0;
+        bool stop = false;
+        while(stop < true){
+            for (int i = 0; i < Nbsommet; i++){
+                visited[i] = false;
+                parent[i] = -1;
+            }
+            if (!Dfs(visited, parent, 0, Nbsommet - 1)){
+                stop = true;
+                break;
+            }
+            float path_flow = INFINITY;
+            for (int v = Nbsommet - 1; v != 0; v = parent[v]){
+                int u = parent[v];
+                path_flow = std::min(path_flow, matrix[u][v]);
+            }
+            for (int v = Nbsommet - 1; v != 0; v = parent[v]){
+                int u = parent[v];
+                matrix[u][v] -= path_flow;
+                matrix[v][u] += path_flow;
+            }
+            max_flow += path_flow;
 
-        file.push(0);
 
-        for (int i = 0; i < Nbsommet; i++)
-        {
-            Nodes[i] = i;
-            distance[i] = 100000;
-            chemin[i] = 0;
         }
+    }
 
-        distance[0] = 0;
-        file.push(0);
-        lenght = file.size();
+    void display_result(){
+        std::cout << "The maximum possible flow is: " << max_flow << std::endl;
+        std::cout << "The residual graph is: " << std::endl;
+        display_graph();
+    }
 
-        while (lenght > 0)
+    ~FoldFulkerson()
+    {
+        for (int i = 0; i < Nbsommet; ++i)
         {
-            prec = file.front();
-            std::cout << "Le predecesseur est: " << prec << " " << std::endl;
-            file.pop();
-            for (int i = 0; i < Nbsommet; i++)
-            {
-                if (Matrice[prec][i] > 0)
-                {
-                    succ = i;
-                    pds_succ = Matrice[prec][i];
-                    std::cout << "le successeur est: " << succ << std::endl;
-                    std::cout << "le poids du sucesseur est: " << pds_succ << std::endl;
-                    dist = distance[prec] + succ;
-                    std::cout << "la distance du calcul est: " << dist << std::endl;
-                    if (dist < distance[succ])
-                    {
+            delete[] matrix[i];
+        }
+        delete[] matrix;
+        delete[] Marque;
+    }
 
-                        distance[succ] = dist;
-                        chemin[succ] = prec;
-                        file.push(i);
-                    }
-                }
-                lenght = file.size();
-                std::cout << "La longueur de la pile est: " << lenght << std::endl;
-            };
-            for (int i = 0; i < Nbsommet; i++)
-            {
-
-                std::cout << chemin[i] << " ";
-            };
-            std::cout << std::endl;
-        };
-    };
 };
